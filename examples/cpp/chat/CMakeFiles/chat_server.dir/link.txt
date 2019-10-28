@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/c++   -std=c++11 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/chat_server.dir/chat_server.cc.o CMakeFiles/chat_server.dir/chat.pb.cc.o CMakeFiles/chat_server.dir/chat.grpc.pb.cc.o  -o chat_server 
