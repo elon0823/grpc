@@ -1,6 +1,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <unistd.h>
 
 #include <grpcpp/grpcpp.h>
 
@@ -9,19 +11,50 @@
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
+using grpc::ServerReaderWriter;
 using grpc::Status;
 using chat::ChatMessage;
+using chat::ClientInfo;
 using chat::Ack;
 using chat::Chatter;
 
 // Logic and data behind the server's behavior.
 class ChatterServiceImpl final : public Chatter::Service {
-  Status SendChat(ServerContext* context, const ChatMessage* chatMessage,
-                  Ack* ack) override {
-    std::cout << "received : " << chatMessage->msg() << std::endl;
-    ack->set_error_code(0);
+public:
+
+  Status RouteChat(ServerContext* context,
+                   ServerReaderWriter<ChatMessage, ChatMessage>* stream) override  {
+    
+    std::cout << "New route chat received" << std::endl;
+
+    this->streamMap.insert({context, stream});
+
+    ChatMessage chatMsg;
+    while (stream->Read(&chatMsg)) {
+      std::cout << "message from: " << std::to_string(chatMsg.client_info().unique_id()) << ", " << chatMsg.msg() << std::endl;
+      this->broadcast(chatMsg);
+    }
+
+    for(auto it = this->streamMap.begin(); it != this->streamMap.end(); it++) {
+      if(it->first == context) {
+        this->streamMap.erase(it);
+      }
+
+    }
+
+    std::cout << "One route chat finished" << std::endl;
+
     return Status::OK;
   }
+
+private:
+ 
+  void broadcast(ChatMessage chatMsg) {
+    for ( const auto &it : this->streamMap ) {
+        it.second->Write(chatMsg);
+    }
+  }
+  std::unordered_map<ServerContext*,ServerReaderWriter<ChatMessage, ChatMessage>*> streamMap;
 };
 
 void RunServer() {

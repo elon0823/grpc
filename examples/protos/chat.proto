@@ -19,15 +19,20 @@ package chat;
 // The greeting service definition.
 service Chatter {
   // Sends a greeting
-  rpc SendChat (ChatMessage) returns (Ack) {}
+  rpc RouteChat (stream ChatMessage) returns (stream ChatMessage) {}
 }
 
 // The request message containing the user's name.
+ 
+message ClientInfo {
+	uint32 unique_id = 1;
+}
 message ChatMessage {
-  string name = 1;
-  string msg = 2;
+	ClientInfo client_info = 1;
+	string name = 2;
+	string msg = 3;
 }
 
 message Ack {
-  int32 error_code = 1;
+  uint32 error_code = 1;
 }
